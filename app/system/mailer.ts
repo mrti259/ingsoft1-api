@@ -31,11 +31,34 @@ type ExamFeedbackContext = {
     nota_final: string;
 };
 
+type Ejercicio = { 
+    nota: string;
+    nombre: string;
+}
+
+type SummaryFeedbackContext = {
+    nombre: string;
+    padron: string;
+    ejercicios: Ejercicio[];
+    nota_cursada_final: string;
+    promedio_ejercicios: string;
+    promedio_ej_primer_parcial: string;
+    primer_parcial: string;
+    segundo_parcial: string;
+    primer_recu: string;
+    condicion_final: string;
+    punto_adicional: string;
+    nota_cursada: string;
+    segundo_recu: string;
+};
+
 type Mail<Context> = { to: string; context: Context };
 
 export type MailExerciseFeedback = Mail<ExerciseFeedbackContext>;
 
 export type MailExamFeedback = Mail<ExamFeedbackContext>;
+
+export type MailSummaryFeedback = Mail<SummaryFeedbackContext>;
 
 const env = nunjucks
     .configure('templates')
@@ -89,6 +112,21 @@ export class Mailer {
 
     async sendExamFeedback(context: ExamFeedbackContext, to: string) {
         const options = this._buildMailOptionsForExamFeedback(context);
+        await this._sendMail(to, options);
+    }
+
+    private _buildMailOptionsForSummaryFeedback(
+        context: SummaryFeedbackContext,
+    ): Options {
+        const subject = `Resumen de cursada - Padrón ${context.padron}`;
+        const text = this._render(`emails/notas_examen_plain.html`, context);
+        const html = this._render(`emails/notas_examen.html`, context);
+        const replyTo = this._replyTo;
+        return { subject, text, html, replyTo };
+    }
+
+    async sendSummaryFeedback(context: SummaryFeedbackContext, to: string) {
+        const options = this._buildMailOptionsForSummaryFeedback(context);
         await this._sendMail(to, options);
     }
 }

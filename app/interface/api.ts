@@ -4,7 +4,7 @@ import axios from 'axios';
 import { getContentFromBlock } from '../persistance/notion/blocks';
 import { Assigner, Assignment, Config } from '../system/assigner';
 import { Mailer } from '../system/mailer';
-import { MailExamFeedback, MailExerciseFeedback } from '../system/mailer';
+import { MailExamFeedback, MailExerciseFeedback, MailSummaryFeedback } from '../system/mailer';
 import { Request } from './request';
 import { Response } from './response';
 
@@ -17,6 +17,37 @@ export class Api {
             assigner: Assigner;
         },
     ) {}
+
+    sendSummaryFeedbackHandler: Handler = async (params) => {
+        try {
+            const request = new Request(params);
+            var { to, context }: MailSummaryFeedback = {
+                to: request.parseString('to'),
+                context: {
+                    nombre: request.parseString('student.full_name'),
+                    ejercicios: request.parseString('summary.ejercicios'), // TODO: parsear a array
+                    nota_cursada_final: request.parseString('summary.grade_final_completed'),
+                    promedio_ejercicios: request.parseString('summary.prom_ej'),
+                    promedio_ej_primer_parcial: request.parseString('summary.prom_ej_1p'),
+                    primer_parcial: request.parseString('summary.fist_parcial'),
+                    segundo_parcial: request.parseString('summary.second_parcial_papers'),
+                    primer_recu: request.parseString('summary.first_recu_papers'),
+                    condicion_final: request.parseString('summary.final_condition'),
+                    punto_adicional: request.parseString('summary.extra_point'),
+                    nota_cursada: request.parseString('summary.grade_completed'),
+                    segundo_recu: request.parseString('summary.second_recu'),
+                },
+            };
+        } catch (error) {
+            return Response.badRequest(String(error));
+        }
+        try {
+            await this._services.mailer.sendSummaryFeedback(context, to);
+        } catch (error) {
+            return Response.error(String(error));
+        }
+        return Response.ok(`Correo enviado a ${to}`);
+    };
 
     sendExerciseFeedbackHandler: Handler = async (params) => {
         try {
